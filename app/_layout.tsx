@@ -1,20 +1,16 @@
-import { TamaguiProvider, createTamagui } from '@tamagui/core';
+import tamaguiConfig from '@/tamagui.config';
+import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { TamaguiProvider } from '@tamagui/core';
+
 import { Stack } from "expo-router";
-
-import { defaultConfig } from '@tamagui/config/v4';
-
-// you usually export this from a tamagui.config.ts file
-const config = createTamagui(defaultConfig)
-
-type Conf = typeof config
-
-// make imports typed
-declare module '@tamagui/core' {
-  interface TamaguiCustomConfig extends Conf { }
-}
+import { useColorScheme } from 'react-native';
+import '../utils/polyfills';
 
 export default function RootLayout() {
-  return <TamaguiProvider config={config}>
-    <Stack />
+  const colorScheme = useColorScheme()
+  return <TamaguiProvider config={tamaguiConfig}>
+    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <Stack />
+    </ThemeProvider>
   </TamaguiProvider>;
 }
