@@ -1,9 +1,14 @@
+import { generateId } from '@/utils/generateId';
 import { generateAPIUrl } from '@/utils/utils';
 import { useChat } from '@ai-sdk/react';
+import { useQueryClient } from '@tanstack/react-query';
 import { DefaultChatTransport } from 'ai';
+import { router } from 'expo-router';
 import { fetch as expoFetch } from 'expo/fetch';
+import { useEffect, useRef } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, YStack } from 'tamagui';
+import { chatKeys, useChatQuery } from '../queries';
 import { ChatHeader } from './ChatHeader';
 import { ChatInput } from './ChatInput';
 import { ChatMessageList } from './ChatMessageList';
@@ -14,13 +19,42 @@ interface ChatScreenProps {
 
 export function ChatScreen({ chatId }: ChatScreenProps) {
   
-  const { messages, error, sendMessage, stop, status } = useChat({
+  const { data: chat, isLoading: chatLoading, error: chatError } = useChatQuery(chatId);
+  const queryClient = useQueryClient();
+  const hasRedirected = useRef(false);
+  const generatedIdRef = useRef<string | null>(null);
+  
+  if (!chatId && !generatedIdRef.current) {
+    generatedIdRef.current = generateId();
+  }
+  
+  const finalChatId = chatId || generatedIdRef.current || undefined;
+  
+  const { messages, error, sendMessage, stop, status, setMessages } = useChat({
     transport: new DefaultChatTransport({
       fetch: expoFetch as unknown as typeof globalThis.fetch,
-      api: generateAPIUrl('/api/chat'),
+      api: generateAPIUrl('/api/ask'),
     }),
     onError: (error) => console.error(error, 'CHAT_ERROR'),
+    id: finalChatId,
+    onData: () => {
+      if (!chatId && !hasRedirected.current && generatedIdRef.current) {
+        hasRedirected.current = true;
+        router.replace(`/${generatedIdRef.current}`);
+      }
+    },
+    onFinish: () => {
+      if (!chatId && generatedIdRef.current) {
+        queryClient.invalidateQueries({ queryKey: chatKeys.lists() });
+      }
+    }
   });
+
+  useEffect(() => {
+    if (chat?.messages && Array.isArray(chat.messages) && chat.messages.length > 0 && messages.length === 0) {
+      setMessages(chat.messages);
+    }
+  }, [chat?.messages, setMessages, messages.length]);
 
   const isLoading = status === "streaming";
 
@@ -30,8 +64,16 @@ export function ChatScreen({ chatId }: ChatScreenProps) {
     }
   };
 
+  if (chatLoading) {
+    return <Text color="$color">Cargando chat...</Text>;
+  }
+
+  if (chatError) {
+    return <Text color="$color">{chatError.message || 'Error al cargar el chat'}</Text>;
+  }
+
   if (error) {
-    return <Text color="$color">{error}</Text>;
+    return <Text color="$color">{error.message || 'Error en el chat'}</Text>;
   }
 
   return (

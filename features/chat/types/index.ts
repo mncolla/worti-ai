@@ -1,3 +1,14 @@
+import { UIMessage } from 'ai';
+
+export interface Chat {
+  id: string;
+  userId: string;
+  title: string;
+  messages: UIMessage[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant' | 'system';

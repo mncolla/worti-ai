@@ -2,18 +2,12 @@ import { DrawerContentComponentProps } from '@react-navigation/drawer';
 import { router } from 'expo-router';
 import { TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Text, YStack, XStack, Separator } from 'tamagui';
-
-// Datos fake de chats
-const FAKE_CHATS = [
-  { id: '1', title: 'Chat sobre React Native', lastMessage: 'Hola, necesito ayuda con...' },
-  { id: '2', title: 'Consulta de TypeScript', lastMessage: 'Tengo problemas con tipos...' },
-  { id: '3', title: 'Ayuda con Expo Router', lastMessage: 'Como implementar navegación...' },
-  { id: '4', title: 'Preguntas de UI/UX', lastMessage: 'Qué opinás sobre este diseño...' },
-  { id: '5', title: 'Debugging de aplicación', lastMessage: 'Mi app se crashea cuando...' },
-];
+import { Separator, Text, XStack, YStack } from 'tamagui';
+import { useChatsQuery } from '../queries';
 
 export function ChatList(props: DrawerContentComponentProps) {
+  const { data: chats = [], isLoading: loading, error } = useChatsQuery();
+
   const handleChatPress = (chatId: string) => {
     router.push(`/${chatId}`);
     props.navigation.closeDrawer();
@@ -22,6 +16,17 @@ export function ChatList(props: DrawerContentComponentProps) {
   const handleNewChat = () => {
     router.push('/');
     props.navigation.closeDrawer();
+  };
+
+  const getLastMessage = (messages: any[]) => {
+    if (!messages || messages.length === 0) return 'Nuevo chat';
+    const lastMessage = messages[messages.length - 1];
+    
+    if (lastMessage?.parts?.[0]?.text) {
+      return lastMessage.parts[0].text;
+    }
+    
+    return lastMessage?.content || lastMessage?.text || 'Sin mensaje';
   };
 
   return (
@@ -48,8 +53,20 @@ export function ChatList(props: DrawerContentComponentProps) {
 
         <Separator marginBottom="$4" />
 
+        {loading && (
+          <Text color="$gray11" textAlign="center">
+            Cargando chats...
+          </Text>
+        )}
+
+        {error && (
+          <Text color="$red10" textAlign="center">
+            {error.message || 'Error al cargar los chats'}
+          </Text>
+        )}
+
         <YStack flex={1} gap="$2">
-          {FAKE_CHATS.map((chat) => (
+          {chats.map((chat) => (
             <TouchableOpacity key={chat.id} onPress={() => handleChatPress(chat.id)}>
               <YStack
                 backgroundColor="$gray3"
@@ -65,7 +82,7 @@ export function ChatList(props: DrawerContentComponentProps) {
                   {chat.title}
                 </Text>
                 <Text fontSize="$3" color="$gray11" numberOfLines={2} marginTop="$1">
-                  {chat.lastMessage}
+                  {getLastMessage(chat.messages)}
                 </Text>
                 <Text fontSize="$2" color="$gray10" marginTop="$2">
                   ID: {chat.id}
@@ -73,6 +90,12 @@ export function ChatList(props: DrawerContentComponentProps) {
               </YStack>
             </TouchableOpacity>
           ))}
+          
+          {!loading && !error && chats.length === 0 && (
+            <Text color="$gray11" textAlign="center" marginTop="$4">
+              No hay chats aún. ¡Crea tu primer chat!
+            </Text>
+          )}
         </YStack>
       </YStack>
     </SafeAreaView>

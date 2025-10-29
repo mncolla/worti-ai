@@ -1,9 +1,9 @@
 import { Card, Text, XStack, useTheme } from 'tamagui';
 import Markdown from 'react-native-markdown-display';
-import { ChatMessage as ChatMessageType } from '../types';
+import { UIMessage } from 'ai';
 
 interface ChatMessageProps {
-  message: ChatMessageType;
+  message: UIMessage;
 }
 
 export function ChatMessage({ message }: ChatMessageProps) {
@@ -19,7 +19,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
           borderRadius="$4"
           maxWidth="80%"
         >
-          {message.parts.map((part, i) => (
+          {message.parts.filter(part => part.type === 'text').map((part, i) => (
             <Text
               key={`${message.id}-${i}`}
               fontSize="$4"
@@ -41,7 +41,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
         borderRadius="$4"
         maxWidth="80%"
       >
-        {message.parts.map((part, i) => (
+        {message.parts.filter(part => part.type === 'text').map((part, i) => (
           <Markdown
             key={`${message.id}-${i}`}
             style={{

@@ -1,4 +1,5 @@
 import { ThemeProvider as AppThemeProvider, useAppTheme } from "@/contexts/ThemeContext";
+import { ChatList } from "@/features/chat/components/ChatList";
 import config from "@/tamagui.config";
 import {
   DarkTheme,
@@ -10,13 +11,23 @@ import { Suspense } from "react";
 import { TamaguiProvider, Text, Theme } from "tamagui";
 import '../utils/polyfills';
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
 function RootNavigator() {
   const { actualTheme } = useAppTheme();
 
   return (
     <Theme name={actualTheme}>
       <ThemeProvider value={actualTheme === "light" ? DefaultTheme : DarkTheme}>
-        <Drawer>
+        <Drawer
+          drawerContent={(props) => <ChatList {...props} />}
+          screenOptions={{
+            headerShown: true,
+            drawerStyle: {
+              backgroundColor: actualTheme === "light" ? "#ffffff" : "#000000",
+            },
+          }}
+        >
           <Drawer.Screen
             name="index"
             options={{
@@ -27,7 +38,7 @@ function RootNavigator() {
           <Drawer.Screen
             name="[chatId]"
             options={{
-              drawerLabel: "Chat",
+              drawerLabel: () => null,
               title: "Chat",
             }}
           />
@@ -37,14 +48,18 @@ function RootNavigator() {
   );
 }
 
+const queryClient = new QueryClient()
+
 export default function RootLayout() {
   return (
     <TamaguiProvider config={config}>
-      <AppThemeProvider>
-        <Suspense fallback={<Text>Loading...</Text>}>
-          <RootNavigator />
-        </Suspense>
-      </AppThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <AppThemeProvider>
+          <Suspense fallback={<Text>Loading...</Text>}>
+            <RootNavigator />
+          </Suspense>
+        </AppThemeProvider>
+      </QueryClientProvider>
     </TamaguiProvider>
   );
 }
