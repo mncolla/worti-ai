@@ -1,6 +1,7 @@
 import { SendHorizontal, StopCircle } from '@tamagui/lucide-icons';
 import { useState } from 'react';
 import { Button, Input, XStack } from 'tamagui';
+import { useHaptics } from '@/hooks/useHaptics';
 
 interface ChatInputProps {
   onSendMessage: (text: string) => void;
@@ -16,9 +17,11 @@ export function ChatInput({
   disabled = false
 }: ChatInputProps) {
   const [input, setInput] = useState('');
+  const haptics = useHaptics();
 
   const handleSend = () => {
     if (input.trim()) {
+      haptics.medium('Mensaje enviado'); // Medium impact for sending message
       onSendMessage(input.trim());
       setInput('');
     }
@@ -68,7 +71,10 @@ export function ChatInput({
           size="$4"
           circular
           icon={StopCircle}
-          onPress={onStopGeneration}
+          onPress={() => {
+            haptics.heavy('Generación detenida'); // Heavy impact for stopping generation
+            onStopGeneration();
+          }}
           backgroundColor="$red10"
           color="white"
         />

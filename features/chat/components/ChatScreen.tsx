@@ -1,3 +1,4 @@
+import { useHaptics } from '@/hooks/useHaptics';
 import { generateId } from '@/utils/generateId';
 import { generateAPIUrl } from '@/utils/utils';
 import { useChat } from '@ai-sdk/react';
@@ -22,6 +23,7 @@ export function ChatScreen({ chatId }: ChatScreenProps) {
   const queryClient = useQueryClient();
   const hasRedirected = useRef(false);
   const generatedIdRef = useRef<string | null>(null);
+  const haptics = useHaptics();
   
   if (!chatId && !generatedIdRef.current) {
     generatedIdRef.current = generateId();
@@ -43,6 +45,7 @@ export function ChatScreen({ chatId }: ChatScreenProps) {
       }
     },
     onFinish: () => {
+      haptics.light();
       if (!chatId && generatedIdRef.current) {
         queryClient.invalidateQueries({ queryKey: chatKeys.lists() });
       }

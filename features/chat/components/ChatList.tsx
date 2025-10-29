@@ -1,34 +1,39 @@
+import { useHaptics } from '@/hooks/useHaptics';
 import { DrawerContentComponentProps } from '@react-navigation/drawer';
+import { Trash2 } from '@tamagui/lucide-icons';
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Separator, Text, XStack, YStack } from 'tamagui';
-import { Trash2 } from '@tamagui/lucide-icons';
-import { useState } from 'react';
-import { useChatsQuery } from '../queries';
 import { useDeleteChatMutation } from '../mutations/useDeleteChatMutation';
+import { useChatsQuery } from '../queries';
 import { DeleteChatModal } from './DeleteChatModal';
 
 export function ChatList(props: DrawerContentComponentProps) {
   const { data: chats = [], isLoading: loading, error } = useChatsQuery();
   const deleteChatMutation = useDeleteChatMutation();
+  const haptics = useHaptics();
   const [deleteModalState, setDeleteModalState] = useState<{ isOpen: boolean; chatId: string | null }>({
     isOpen: false,
     chatId: null,
   });
 
   const handleChatPress = (chatId: string) => {
+    haptics.light(); // Light impact for chat selection
     router.push(`/${chatId}`);
     props.navigation.closeDrawer();
   };
 
   const handleNewChat = () => {
+    haptics.medium(); // Medium impact for creating new chat
     router.push('/');
     props.navigation.closeDrawer();
   };
 
   const handleDeletePress = (chatId: string, event: any) => {
-    event.stopPropagation(); // Prevent chat navigation
+    event.stopPropagation();
+    haptics.warning();
     setDeleteModalState({ isOpen: true, chatId });
   };
 
@@ -37,8 +42,10 @@ export function ChatList(props: DrawerContentComponentProps) {
     
     try {
       await deleteChatMutation.mutateAsync(deleteModalState.chatId);
+      haptics.success();
       setDeleteModalState({ isOpen: false, chatId: null });
     } catch (error) {
+      haptics.error();
       console.error('Error deleting chat:', error);
     }
   };
