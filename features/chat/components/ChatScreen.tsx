@@ -9,7 +9,6 @@ import { useEffect, useRef } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, YStack } from 'tamagui';
 import { chatKeys, useChatQuery } from '../queries';
-import { ChatHeader } from './ChatHeader';
 import { ChatInput } from './ChatInput';
 import { ChatMessageList } from './ChatMessageList';
 
@@ -79,7 +78,6 @@ export function ChatScreen({ chatId }: ChatScreenProps) {
   return (
     <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
       <YStack flex={1} backgroundColor="$background" gap="$3">
-        <ChatHeader chatId={chatId} />
         <ChatMessageList messages={messages} />
         <ChatInput
           onSendMessage={handleSendMessage}

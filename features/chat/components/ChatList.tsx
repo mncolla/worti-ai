@@ -2,11 +2,20 @@ import { DrawerContentComponentProps } from '@react-navigation/drawer';
 import { router } from 'expo-router';
 import { TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Separator, Text, XStack, YStack } from 'tamagui';
+import { Button, Separator, Text, XStack, YStack } from 'tamagui';
+import { Trash2 } from '@tamagui/lucide-icons';
+import { useState } from 'react';
 import { useChatsQuery } from '../queries';
+import { useDeleteChatMutation } from '../mutations/useDeleteChatMutation';
+import { DeleteChatModal } from './DeleteChatModal';
 
 export function ChatList(props: DrawerContentComponentProps) {
   const { data: chats = [], isLoading: loading, error } = useChatsQuery();
+  const deleteChatMutation = useDeleteChatMutation();
+  const [deleteModalState, setDeleteModalState] = useState<{ isOpen: boolean; chatId: string | null }>({
+    isOpen: false,
+    chatId: null,
+  });
 
   const handleChatPress = (chatId: string) => {
     router.push(`/${chatId}`);
@@ -16,6 +25,26 @@ export function ChatList(props: DrawerContentComponentProps) {
   const handleNewChat = () => {
     router.push('/');
     props.navigation.closeDrawer();
+  };
+
+  const handleDeletePress = (chatId: string, event: any) => {
+    event.stopPropagation(); // Prevent chat navigation
+    setDeleteModalState({ isOpen: true, chatId });
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteModalState.chatId) return;
+    
+    try {
+      await deleteChatMutation.mutateAsync(deleteModalState.chatId);
+      setDeleteModalState({ isOpen: false, chatId: null });
+    } catch (error) {
+      console.error('Error deleting chat:', error);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteModalState({ isOpen: false, chatId: null });
   };
 
   const getLastMessage = (messages: any[]) => {
@@ -68,26 +97,37 @@ export function ChatList(props: DrawerContentComponentProps) {
         <YStack flex={1} gap="$2">
           {chats.map((chat) => (
             <TouchableOpacity key={chat.id} onPress={() => handleChatPress(chat.id)}>
-              <YStack
-                backgroundColor="$gray3"
+              <XStack
+                backgroundColor="$transparent"
                 padding="$3"
                 borderRadius="$3"
-                borderWidth={1}
-                borderColor="$borderColor"
+                alignItems="center"
+                justifyContent="space-between"
                 hoverStyle={{
                   backgroundColor: "$gray4",
                 }}
               >
-                <Text fontSize="$4" fontWeight="600" color="$color" numberOfLines={1}>
-                  {chat.title}
-                </Text>
-                <Text fontSize="$3" color="$gray11" numberOfLines={2} marginTop="$1">
-                  {getLastMessage(chat.messages)}
-                </Text>
-                <Text fontSize="$2" color="$gray10" marginTop="$2">
-                  ID: {chat.id}
-                </Text>
-              </YStack>
+                <YStack flex={1} marginRight="$2">
+                  <Text fontSize="$4" fontWeight="600" color="$color" numberOfLines={1}>
+                    {chat.title}
+                  </Text>
+                </YStack>
+                <Button
+                  size="$2"
+                  circular
+                  icon={Trash2}
+                  backgroundColor="transparent"
+                  borderWidth={0}
+                  color="$red10"
+                  onPress={(event) => handleDeletePress(chat.id, event)}
+                  hoverStyle={{
+                    backgroundColor: "$red4",
+                  }}
+                  pressStyle={{
+                    backgroundColor: "$red5",
+                  }}
+                />
+              </XStack>
             </TouchableOpacity>
           ))}
           
@@ -98,6 +138,13 @@ export function ChatList(props: DrawerContentComponentProps) {
           )}
         </YStack>
       </YStack>
+
+      <DeleteChatModal
+        isOpen={deleteModalState.isOpen}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        isDeleting={deleteChatMutation.isPending}
+      />
     </SafeAreaView>
   );
 }

@@ -1,5 +1,4 @@
 // Components
-export { ChatHeader } from './components/ChatHeader';
 export { ChatInput } from './components/ChatInput';
 export { ChatMessage } from './components/ChatMessage';
 export { ChatMessageList } from './components/ChatMessageList';
