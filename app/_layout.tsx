@@ -5,7 +5,7 @@ import {
   DefaultTheme,
   ThemeProvider
 } from "@react-navigation/native";
-import { Stack } from "expo-router";
+import { Drawer } from "expo-router/drawer";
 import { Suspense } from "react";
 import { TamaguiProvider, Text, Theme } from "tamagui";
 import '../utils/polyfills';
@@ -16,9 +16,22 @@ function RootNavigator() {
   return (
     <Theme name={actualTheme}>
       <ThemeProvider value={actualTheme === "light" ? DefaultTheme : DarkTheme}>
-        <Stack screenOptions={{
-          headerShown: false
-        }}/>
+        <Drawer>
+          <Drawer.Screen
+            name="index"
+            options={{
+              drawerLabel: "Nuevo Chat",
+              title: "WortAI",
+            }}
+          />
+          <Drawer.Screen
+            name="[chatId]"
+            options={{
+              drawerLabel: "Chat",
+              title: "Chat",
+            }}
+          />
+        </Drawer>
       </ThemeProvider>
     </Theme>
   );
