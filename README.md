@@ -212,3 +212,16 @@ npx drizzle-kit migrate
 
    Muestra el resultado en formato de árbol de carpetas, siguiendo las convenciones más comunes de un proyecto React + TypeScript.
    ```
+
+3. **Haptics custom hook**
+   ```ts
+   Genera un custom hook de React Native llamado useHaptics que utilice la librería expo-haptics para manejar feedback háptico.
+
+   El hook debe:
+	•	Tener funciones para distintos tipos de vibraciones: light, medium, heavy, success, warning, error y selection.
+	•	Usar internamente Haptics.impactAsync, Haptics.notificationAsync y Haptics.selectionAsync según el tipo.
+	•	Incluir un modo debug activado solo en __DEV__, que muestre en consola el tipo de haptic disparado junto a un emoji representativo.
+	•	Manejar errores con try/catch para evitar fallos si el dispositivo no soporta vibración.
+	•	Ser exportado como useHaptics y devolver las funciones mencionadas listas para usar en componentes.
+	•	Escribirlo en TypeScript y con buenas prácticas de código limpias y seguras.
+   ```
