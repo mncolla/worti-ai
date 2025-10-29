@@ -78,7 +78,7 @@ export function ChatScreen({ chatId }: ChatScreenProps) {
   return (
     <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
       <YStack flex={1} backgroundColor="$background" gap="$3">
-        <ChatMessageList messages={messages} />
+        <ChatMessageList messages={messages} isLoading={isLoading} />
         <ChatInput
           onSendMessage={handleSendMessage}
           onStopGeneration={stop}
