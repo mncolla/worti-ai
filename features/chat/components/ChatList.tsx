@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Separator, Text, XStack, YStack } from 'tamagui';
 import { useDeleteChatMutation } from '../mutations/useDeleteChatMutation';
 import { useChatsQuery } from '../queries';
+import { AnimatedChatItem } from './AnimatedChatItem';
 import { DeleteChatModal } from './DeleteChatModal';
 
 export function ChatList(props: DrawerContentComponentProps) {
@@ -18,6 +19,7 @@ export function ChatList(props: DrawerContentComponentProps) {
     isOpen: false,
     chatId: null,
   });
+  const [deletingChatIds, setDeletingChatIds] = useState<Set<string>>(new Set());
 
   const handleChatPress = (chatId: string) => {
     haptics.light(); // Light impact for chat selection
@@ -40,14 +42,33 @@ export function ChatList(props: DrawerContentComponentProps) {
   const handleDeleteConfirm = async () => {
     if (!deleteModalState.chatId) return;
     
+    const chatIdToDelete = deleteModalState.chatId;
+    
+    setDeletingChatIds(prev => new Set(prev).add(chatIdToDelete));
+    setDeleteModalState({ isOpen: false, chatId: null });
+    
     try {
-      await deleteChatMutation.mutateAsync(deleteModalState.chatId);
-      haptics.success();
-      setDeleteModalState({ isOpen: false, chatId: null });
+      setTimeout(async () => {
+        await deleteChatMutation.mutateAsync(chatIdToDelete);
+        haptics.success('Chat eliminado');
+      }, 100);
     } catch (error) {
-      haptics.error();
+      haptics.error('Error al eliminar');
       console.error('Error deleting chat:', error);
+      setDeletingChatIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(chatIdToDelete);
+        return newSet;
+      });
     }
+  };
+
+  const handleDeleteAnimationComplete = (chatId: string) => {
+    setDeletingChatIds(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(chatId);
+      return newSet;
+    });
   };
 
   const handleDeleteCancel = () => {
@@ -103,39 +124,45 @@ export function ChatList(props: DrawerContentComponentProps) {
 
         <YStack flex={1} gap="$2">
           {chats.map((chat) => (
-            <TouchableOpacity key={chat.id} onPress={() => handleChatPress(chat.id)}>
-              <XStack
-                backgroundColor="$transparent"
-                padding="$3"
-                borderRadius="$3"
-                alignItems="center"
-                justifyContent="space-between"
-                hoverStyle={{
-                  backgroundColor: "$gray4",
-                }}
-              >
-                <YStack flex={1} marginRight="$2">
-                  <Text fontSize="$4" fontWeight="600" color="$color" numberOfLines={1}>
-                    {chat.title}
-                  </Text>
-                </YStack>
-                <Button
-                  size="$2"
-                  circular
-                  icon={Trash2}
-                  backgroundColor="transparent"
-                  borderWidth={0}
-                  color="$red10"
-                  onPress={(event) => handleDeletePress(chat.id, event)}
+            <AnimatedChatItem
+              key={chat.id}
+              isDeleting={deletingChatIds.has(chat.id)}
+              onDeleteComplete={() => handleDeleteAnimationComplete(chat.id)}
+            >
+              <TouchableOpacity onPress={() => handleChatPress(chat.id)}>
+                <XStack
+                  backgroundColor="$transparent"
+                  padding="$3"
+                  borderRadius="$3"
+                  alignItems="center"
+                  justifyContent="space-between"
                   hoverStyle={{
-                    backgroundColor: "$red4",
+                    backgroundColor: "$gray4",
                   }}
-                  pressStyle={{
-                    backgroundColor: "$red5",
-                  }}
-                />
-              </XStack>
-            </TouchableOpacity>
+                >
+                  <YStack flex={1} marginRight="$2">
+                    <Text fontSize="$4" fontWeight="600" color="$color" numberOfLines={1}>
+                      {chat.title}
+                    </Text>
+                  </YStack>
+                  <Button
+                    size="$2"
+                    circular
+                    icon={Trash2}
+                    backgroundColor="transparent"
+                    borderWidth={0}
+                    color="$red10"
+                    onPress={(event) => handleDeletePress(chat.id, event)}
+                    hoverStyle={{
+                      backgroundColor: "$red4",
+                    }}
+                    pressStyle={{
+                      backgroundColor: "$red5",
+                    }}
+                  />
+                </XStack>
+              </TouchableOpacity>
+            </AnimatedChatItem>
           ))}
           
           {!loading && !error && chats.length === 0 && (
